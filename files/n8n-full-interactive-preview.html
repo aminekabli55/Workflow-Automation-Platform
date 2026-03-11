@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N8N-Style Workflow Editor with Config Panel - FULL PREVIEW</title>
+    <link rel="stylesheet" href="https://unpkg.com/primeicons/primeicons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        :root {
+            --n8n-red: #ff6d5a;
+            --n8n-dark: #1a1a1a;
+            --n8n-gray: #555555;
+            --n8n-light-gray: #f5f5f5;
+            --n8n-border: #e0e0e0;
+            --n8n-success: #00c851;
+        }
+
+        .n8n-editor {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+
+        /* Header */
+        .n8n-header {
+            height: 65px;
+            background: white;
+            border-bottom: 1px solid var(--n8n-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .n8n-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--n8n-dark);
+        }
+
+        .n8n-logo .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--n8n-red);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .workflow-name-input {
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--n8n-dark);
+            padding: 8px 12px;
+            border-radius: 4px;
+            min-width: 200px;
+            outline: none;
+        }
+
+        .workflow-name-input:hover {
+            background: var(--n8n-light-gray);
+        }
+
+        .header-center {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            height: 36px;
+            padding: 0 16px;
+            border: 1px solid var(--n8n-border);
+            background: white;
+            border-radius: 4px;
+            color: var(--n8n-gray);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-btn:hover {
+            background: var(--n8n-light-gray);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-save {
+            height: 36px;
+            padding: 0 16px;
+            background: white;
+            border: 1px solid var(--n8n-border);
+            border-radius: 4px;
+            color: var(--n8n-gray);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-execute {
+            height: 36px;
+            padding: 0 20px;
+            background: var(--n8n-red);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-execute:hover {
+            background: #ff5744;
+        }
+
+        /* Main */
+        .n8n-main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar */
+        .n8n-sidebar {
+            width: 340px;
+            background: white;
+            border-right: 1px solid var(--n8n-border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--n8n-border);
+        }
+
+        .sidebar-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--n8n-dark);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-search {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px;
+            border: 1px solid var(--n8n-border);
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--n8n-gray);
+            text-transform: uppercase;
+            margin: 16px 0 8px 8px;
+        }
+
+        .n8n-node {
+            height: 48px;
+            padding: 0 12px;
+            margin-bottom: 4px;
+            background: white;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: grab;
+        }
+
+        .n8n-node:hover {
+            background: var(--n8n-light-gray);
+            border-color: var(--n8n-border);
+        }
+
+        .node-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .node-info {
+            flex: 1;
+        }
+
+        .node-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--n8n-dark);
+            margin-bottom: 2px;
+        }
+
+        .node-description {
+            font-size: 12px;
+            color: var(--n8n-gray);
+        }
+
+        /* Canvas */
+        .n8n-canvas {
+            flex: 1;
+            background: #fafafa;
+            position: relative;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .canvas-content {
+            position: absolute;
+            top: 50%;
+            left: 40%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            gap: 100px;
+        }
+
+        .canvas-node {
+            position: relative;
+            width: 100px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .canvas-node-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--n8n-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .canvas-node-circle:hover {
+            border-color: var(--n8n-red);
+            transform: scale(1.05);
+        }
+
+        .canvas-node-circle.selected {
+            border-color: var(--n8n-red);
+            border-width: 3px;
+        }
+
+        .node-plus-btn {
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: var(--n8n-red);
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .canvas-node-label {
+            margin-top: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--n8n-dark);
+        }
+
+        .canvas-node-type {
+            font-size: 11px;
+            color: var(--n8n-gray);
+            text-transform: uppercase;
+        }
+
+        /* Config Panel */
+        .config-panel {
+            position: absolute;
+            right: -400px;
+            top: 0;
+            bottom: 0;
+            width: 400px;
+            background: white;
+            border-left: 1px solid var(--n8n-border);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .config-panel.open {
+            right: 0;
+        }
+
+        .config-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--n8n-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .config-header h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--n8n-dark);
+        }
+
+        .node-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--n8n-light-gray);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--n8n-gray);
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--n8n-border);
+            background: white;
+            border-radius: 4px;
+            color: var(--n8n-gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--n8n-light-gray);
+        }
+
+        .config-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--n8n-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--n8n-border);
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--n8n-red);
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--n8n-gray);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .filter-section {
+            background: var(--n8n-light-gray);
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .filter-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--n8n-gray);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        /* Footer */
+        .execution-panel {
+            height: 50px;
+            background: white;
+            border-top: 1px solid var(--n8n-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 13px;
+        }
+
+        .execution-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--n8n-gray);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--n8n-success);
+        }
+
+        .execution-info {
+            display: flex;
+            gap: 20px;
+            color: var(--n8n-gray);
+        }
+
+        .connection-line {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: #d0d0d0;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .connection-arrow {
+            position: absolute;
+            right: -1px;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #d0d0d0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="n8n-editor">
+        <!-- Header -->
+        <div class="n8n-header">
+            <div class="header-left">
+                <div class="n8n-logo">
+                    <div class="logo-icon">n</div>
+                    <span>n8n</span>
+                </div>
+                <input type="text" class="workflow-name-input" value="Email to Slack Automation" readonly>
+            </div>
+            
+            <div class="header-center">
+                <button class="header-btn">
+                    <i class="pi pi-history"></i>
+                    Versions
+                </button>
+                <button class="header-btn">
+                    <i class="pi pi-cog"></i>
+                    Settings
+                </button>
+            </div>
+            
+            <div class="header-right">
+                <button class="btn-save">
+                    <i class="pi pi-save"></i>
+                    Save
+                </button>
+                <button class="btn-execute">
+                    <i class="pi pi-play"></i>
+                    Execute Workflow
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main -->
+        <div class="n8n-main">
+            <!-- Sidebar -->
+            <div class="n8n-sidebar">
+                <div class="sidebar-header">
+                    <h3>Nodes</h3>
+                    <input type="text" class="sidebar-search" placeholder="Search nodes...">
+                </div>
+                
+                <div class="sidebar-content">
+                    <div class="section-title">Core</div>
+                    
+                    <div class="n8n-node">
+                        <div class="node-icon" style="background: #10b98120; color: #10b981;">
+                            <i class="pi pi-bolt"></i>
+                        </div>
+                        <div class="node-info">
+                            <div class="node-name">Schedule Trigger</div>
+                            <div class="node-description">Triggers workflow</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">Actions</div>
+                    
+                    <div class="n8n-node">
+                        <div class="node-icon" style="background: #ef444420; color: #ef4444;">
+                            <i class="pi pi-envelope"></i>
+                        </div>
+                        <div class="node-info">
+                            <div class="node-name">Gmail</div>
+                            <div class="node-description">Read and send emails</div>
+                        </div>
+                    </div>
+                    
+                    <div class="n8n-node">
+                        <div class="node-icon" style="background: #3b82f620; color: #3b82f6;">
+                            <i class="pi pi-globe"></i>
+                        </div>
+                        <div class="node-info">
+                            <div class="node-name">HTTP Request</div>
+                            <div class="node-description">Make HTTP requests</div>
+                        </div>
+                    </div>
+                    
+                    <div class="n8n-node">
+                        <div class="node-icon" style="background: #6366f120; color: #6366f1;">
+                            <i class="pi pi-slack"></i>
+                        </div>
+                        <div class="node-info">
+                            <div class="node-name">Slack</div>
+                            <div class="node-description">Send to Slack</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Canvas -->
+            <div class="n8n-canvas">
+                <div class="canvas-content">
+                    <div class="canvas-node">
+                        <div class="canvas-node-circle">
+                            ⚡
+                            <div class="node-plus-btn">+</div>
+                        </div>
+                        <div class="canvas-node-label">Schedule Trigger</div>
+                        <div class="canvas-node-type">Trigger</div>
+                    </div>
+                    
+                    <div class="connection-line">
+                        <div class="connection-arrow"></div>
+                    </div>
+                    
+                    <div class="canvas-node" onclick="toggleConfig()">
+                        <div class="canvas-node-circle selected" style="color: #ef4444;">
+                            ✉
+                            <div class="node-plus-btn">+</div>
+                        </div>
+                        <div class="canvas-node-label">Gmail</div>
+                        <div class="canvas-node-type">Action</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Config Panel -->
+            <div class="config-panel open" id="configPanel">
+                <div class="config-header">
+                    <div>
+                        <h3>Gmail</h3>
+                        <span class="node-type-badge">gmail</span>
+                    </div>
+                    <div class="header-right">
+                        <button class="icon-btn" title="Delete">
+                            <i class="pi pi-trash"></i>
+                        </button>
+                        <button class="icon-btn" onclick="toggleConfig()" title="Close">
+                            <i class="pi pi-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="config-content">
+                    <!-- Credential -->
+                    <div class="form-group">
+                        <label>Credential</label>
+                        <input type="text" value="My Gmail Account" readonly>
+                        <small>Connect your Gmail account</small>
+                    </div>
+                    
+                    <!-- Action -->
+                    <div class="form-group">
+                        <label>Action</label>
+                        <select id="actionSelect" onchange="changeAction()">
+                            <option value="read">Read Emails</option>
+                            <option value="send">Send Email</option>
+                            <option value="search">Search Emails</option>
+                            <option value="markAsRead">Mark as Read</option>
+                            <option value="addLabel">Add Label</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Read Action (Default) -->
+                    <div id="readConfig">
+                        <div class="filter-section">
+                            <div class="filter-title">Filters</div>
+                            
+                            <div class="form-group">
+                                <label>From Email</label>
+                                <input type="email" placeholder="sender@example.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Subject Contains</label>
+                                <input type="text" placeholder="Keywords...">
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="unreadOnly">
+                                <label for="unreadOnly">Only unread emails</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Max Results</label>
+                            <input type="number" value="10" min="1" max="100">
+                            <small>Maximum number of emails to fetch</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Send Action -->
+                    <div id="sendConfig" style="display: none;">
+                        <div class="form-group">
+                            <label>To</label>
+                            <input type="email" placeholder="recipient@example.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Subject</label>
+                            <input type="text" placeholder="Email subject">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Body</label>
+                            <textarea placeholder="Email content..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Add Label Action -->
+                    <div id="labelConfig" style="display: none;">
+                        <div class="form-group">
+                            <label>Label Name</label>
+                            <input type="text" placeholder="Important">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="execution-panel">
+            <div class="execution-status">
+                <div class="status-dot"></div>
+                <span>Workflow ready</span>
+            </div>
+            
+            <div class="execution-info">
+                <span><i class="pi pi-circle"></i> 2 Nodes</span>
+                <span><i class="pi pi-arrow-right"></i> 1 Connection</span>
+                <span><i class="pi pi-clock"></i> Last saved: Just now</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleConfig() {
+            const panel = document.getElementById('configPanel');
+            panel.classList.toggle('open');
+        }
+
+        function changeAction() {
+            const action = document.getElementById('actionSelect').value;
+            
+            // Hide all configs
+            document.getElementById('readConfig').style.display = 'none';
+            document.getElementById('sendConfig').style.display = 'none';
+            document.getElementById('labelConfig').style.display = 'none';
+            
+            // Show selected config
+            if (action === 'read' || action === 'search') {
+                document.getElementById('readConfig').style.display = 'block';
+            } else if (action === 'send') {
+                document.getElementById('sendConfig').style.display = 'block';
+            } else if (action === 'addLabel') {
+                document.getElementById('labelConfig').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

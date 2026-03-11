@@ -1,0 +1,40 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: credentials-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/workflow_db
+    username: amine
+    password: amine123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+# Encryption
+jasypt:
+  encryptor:
+    password: ${ENCRYPTION_KEY:your-secret-encryption-key-change-in-production}
+    algorithm: PBEWithMD5AndDES
+
+# OAuth Configuration
+oauth:
+  gmail:
+    client-id: 206834619924-b5oim9ijn48bke0l8khff6nf94bsl7hp.apps.googleusercontent.com
+    client-secret: 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
+    redirect-uri: http://localhost:8085/api/oauth/callback/gmail
+    scopes:
+      - https://www.googleapis.com/auth/gmail.readonly
+      - https://www.googleapis.com/auth/gmail.send
+      - https://www.googleapis.com/auth/gmail.modify

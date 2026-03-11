@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Execution Flow - How Services Communicate</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        /* Workflow Visual Example */
+        .workflow-canvas {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 400px;
+        }
+        .workflow-node {
+            display: inline-block;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin: 10px;
+            color: white;
+            font-weight: bold;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .node-trigger { background: #e74c3c; }
+        .node-gmail { background: #3498db; }
+        .node-gemini { background: #9b59b6; }
+        .node-http { background: #2ecc71; }
+        
+        .node-details {
+            font-size: 11px;
+            font-weight: normal;
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+        
+        .connection-line {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .arrow {
+            font-size: 30px;
+            color: #3498db;
+            margin: 0 20px;
+        }
+        
+        /* JSON Example */
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .code-comment {
+            color: #95a5a6;
+        }
+        .code-key {
+            color: #e74c3c;
+        }
+        .code-string {
+            color: #2ecc71;
+        }
+        .code-number {
+            color: #f39c12;
+        }
+        
+        /* Execution Steps */
+        .execution-step {
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #3498db;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .step-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        .step-content {
+            padding-left: 25px;
+            line-height: 1.8;
+        }
+        
+        /* Data Flow Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 5px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 How Workflow Services Execute in Order & Communicate</h1>
+        <p style="text-align: center; color: #7f8c8d; font-size: 16px;">Understanding the Execution Engine & Inter-Service Communication</p>
+
+        <!-- Visual Workflow Example -->
+        <h2>1️⃣ Visual Workflow Example (What User Creates in Angular)</h2>
+        <div class="workflow-canvas">
+            <div style="text-align: center;">
+                <div class="connection-line">
+                    <div class="workflow-node node-trigger">
+                        ⏰ TRIGGER
+                        <div class="node-details">ID: node-1<br>Every day at 8 AM</div>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="workflow-node node-gmail">
+                        📧 GMAIL
+                        <div class="node-details">ID: node-2<br>Read unread emails</div>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="workflow-node node-gemini">
+                        🤖 GEMINI
+                        <div class="node-details">ID: node-3<br>Summarize content</div>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="workflow-node node-http">
+                        🌐 HTTP
+                        <div class="node-details">ID: node-4<br>Send to webhook</div>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>👤 User Actions in Angular:</strong>
+                <ul>
+                    <li>Drags "Trigger" node onto canvas → Configure: "0 8 * * *" (cron)</li>
+                    <li>Drags "Gmail" node → Connects from Trigger → Configure: Read emails from "client@example.com"</li>
+                    <li>Drags "Gemini" node → Connects from Gmail → Configure: "Summarize the following: {gmail.body}"</li>
+                    <li>Drags "HTTP" node → Connects from Gemini → Configure: POST to "https://webhook.site/xyz"</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- JSON Representation -->
+        <h2>2️⃣ How It's Stored (Workflow Definition in PostgreSQL)</h2>
+        <div class="section">
+            <p><strong>When user saves the workflow, Angular sends this JSON to the Workflow Service:</strong></p>
+            <div class="code-block">
+{
+  <span class="code-key">"workflowId"</span>: <span class="code-string">"workflow-123"</span>,
+  <span class="code-key">"name"</span>: <span class="code-string">"Daily Email Summary"</span>,
+  <span class="code-key">"userId"</span>: <span class="code-string">"user-456"</span>,
+  <span class="code-key">"nodes"</span>: [
+    {
+      <span class="code-key">"id"</span>: <span class="code-string">"node-1"</span>,
+      <span class="code-key">"type"</span>: <span class="code-string">"trigger"</span>,
+      <span class="code-key">"position"</span>: { <span class="code-key">"x"</span>: <span class="code-number">100</span>, <span class="code-key">"y"</span>: <span class="code-number">200</span> },
+      <span class="code-key">"config"</span>: {
+        <span class="code-key">"triggerType"</span>: <span class="code-string">"cron"</span>,
+        <span class="code-key">"cronExpression"</span>: <span class="code-string">"0 8 * * *"</span>
+      }
+    },
+    {
+      <span class="code-key">"id"</span>: <span class="code-string">"node-2"</span>,
+      <span class="code-key">"type"</span>: <span class="code-string">"gmail"</span>,
+      <span class="code-key">"position"</span>: { <span class="code-key">"x"</span>: <span class="code-number">300</span>, <span class="code-key">"y"</span>: <span class="code-number">200</span> },
+      <span class="code-key">"config"</span>: {
+        <span class="code-key">"action"</span>: <span class="code-string">"read"</span>,
+        <span class="code-key">"filters"</span>: {
+          <span class="code-key">"from"</span>: <span class="code-string">"client@example.com"</span>,
+          <span class="code-key">"isUnread"</span>: <span class="code-number">true</span>
+        }
+      }
+    },
+    {
+      <span class="code-key">"id"</span>: <span class="code-string">"node-3"</span>,
+      <span class="code-key">"type"</span>: <span class="code-string">"gemini"</span>,
+      <span class="code-key">"position"</span>: { <span class="code-key">"x"</span>: <span class="code-number">500</span>, <span class="code-key">"y"</span>: <span class="code-number">200</span> },
+      <span class="code-key">"config"</span>: {
+        <span class="code-key">"prompt"</span>: <span class="code-string">"Summarize this email: {{node-2.output.body}}"</span>,
+        <span class="code-comment">// 👆 References previous node's output!</span>
+        <span class="code-key">"model"</span>: <span class="code-string">"gemini-pro"</span>
+      }
+    },
+    {
+      <span class="code-key">"id"</span>: <span class="code-string">"node-4"</span>,
+      <span class="code-key">"type"</span>: <span class="code-string">"http"</span>,
+      <span class="code-key">"position"</span>: { <span class="code-key">"x"</span>: <span class="code-number">700</span>, <span class="code-key">"y"</span>: <span class="code-number">200</span> },
+      <span class="code-key">"config"</span>: {
+        <span class="code-key">"method"</span>: <span class="code-string">"POST"</span>,
+        <span class="code-key">"url"</span>: <span class="code-string">"https://webhook.site/xyz"</span>,
+        <span class="code-key">"body"</span>: {
+          <span class="code-key">"summary"</span>: <span class="code-string">"{{node-3.output.text}}"</span>,
+          <span class="code-comment">// 👆 References Gemini's output!</span>
+          <span class="code-key">"originalEmail"</span>: <span class="code-string">"{{node-2.output.subject}}"</span>
+        }
+      }
+    }
+  ],
+  <span class="code-key">"edges"</span>: [
+    { <span class="code-key">"from"</span>: <span class="code-string">"node-1"</span>, <span class="code-key">"to"</span>: <span class="code-string">"node-2"</span> },
+    { <span class="code-key">"from"</span>: <span class="code-string">"node-2"</span>, <span class="code-key">"to"</span>: <span class="code-string">"node-3"</span> },
+    { <span class="code-key">"from"</span>: <span class="code-string">"node-3"</span>, <span class="code-key">"to"</span>: <span class="code-string">"node-4"</span> }
+  ]
+}
+            </div>
+            
+            <div class="info-box">
+                <strong>🔑 Key Points:</strong>
+                <ul>
+                    <li><strong>Nodes:</strong> Each service is a node with unique ID, type, and configuration</li>
+                    <li><strong>Edges:</strong> Define execution order (from → to)</li>
+                    <li><strong>Variable References:</strong> Use <code>{{node-X.output.field}}</code> to pass data between nodes</li>
+                    <li><strong>Stored in PostgreSQL:</strong> Workflow Service stores this in <code>workflows</code> table as JSONB</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Execution Flow -->
+        <h2>3️⃣ How Execution Works Step-by-Step</h2>
+        
+        <div class="execution-step">
+            <div class="step-number">1</div>
+            <div class="step-title">⏰ Trigger Service Fires</div>
+            <div class="step-content">
+                <p><strong>When:</strong> At 8:00 AM (cron job detected by Quartz Scheduler)</p>
+                <p><strong>Action:</strong></p>
+                <ul>
+                    <li>Trigger Service reads the workflow from PostgreSQL</li>
+                    <li>Creates an execution event</li>
+                    <li><strong>Publishes to Kafka:</strong> Topic <code>workflow-trigger</code></li>
+                </ul>
+                <div class="code-block">
+{
+  <span class="code-key">"workflowId"</span>: <span class="code-string">"workflow-123"</span>,
+  <span class="code-key">"executionId"</span>: <span class="code-string">"exec-789"</span>,
+  <span class="code-key">"userId"</span>: <span class="code-string">"user-456"</span>,
+  <span class="code-key">"triggeredBy"</span>: <span class="code-string">"cron"</span>,
+  <span class="code-key">"timestamp"</span>: <span class="code-string">"2024-02-26T08:00:00Z"</span>
+}
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-step">
+            <div class="step-number">2</div>
+            <div class="step-title">⚙️ Execution Service Receives Event</div>
+            <div class="step-content">
+                <p><strong>Execution Service (Kafka Consumer) listens to <code>workflow-trigger</code> topic</strong></p>
+                <p><strong>When message arrives:</strong></p>
+                <ul>
+                    <li>Fetches workflow definition from PostgreSQL using <code>workflowId</code></li>
+                    <li>Builds execution graph (DAG - Directed Acyclic Graph) from nodes and edges</li>
+                    <li>Determines execution order using topological sort</li>
+                    <li>Creates execution context to store intermediate results</li>
+                </ul>
+                <div class="code-block">
+<span class="code-comment">// Java Pseudo-code in Execution Service</span>
+WorkflowDefinition workflow = workflowRepository.findById(workflowId);
+ExecutionContext context = new ExecutionContext(executionId);
+
+<span class="code-comment">// Build execution order: [node-1, node-2, node-3, node-4]</span>
+List&lt;String&gt; executionOrder = buildExecutionOrder(workflow.getNodes(), workflow.getEdges());
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-step">
+            <div class="step-number">3</div>
+            <div class="step-title">📧 Execute Node 2 - Gmail Service</div>
+            <div class="step-content">
+                <p><strong>Execution Service calls Gmail Service via REST API</strong></p>
+                <div class="code-block">
+<span class="code-comment">// Execution Service makes HTTP call</span>
+POST http://gmail-service:8091/execute
+
+{
+  <span class="code-key">"nodeId"</span>: <span class="code-string">"node-2"</span>,
+  <span class="code-key">"config"</span>: {
+    <span class="code-key">"action"</span>: <span class="code-string">"read"</span>,
+    <span class="code-key">"filters"</span>: { <span class="code-key">"from"</span>: <span class="code-string">"client@example.com"</span> }
+  },
+  <span class="code-key">"credentials"</span>: { <span class="code-comment">/* OAuth token from Credentials Service */</span> }
+}
+                </div>
+                
+                <p><strong>Gmail Service Response:</strong></p>
+                <div class="code-block">
+{
+  <span class="code-key">"success"</span>: <span class="code-number">true</span>,
+  <span class="code-key">"output"</span>: {
+    <span class="code-key">"emailId"</span>: <span class="code-string">"email-abc123"</span>,
+    <span class="code-key">"subject"</span>: <span class="code-string">"Project Update from Client"</span>,
+    <span class="code-key">"body"</span>: <span class="code-string">"Hi, here's the latest update on the project..."</span>,
+    <span class="code-key">"from"</span>: <span class="code-string">"client@example.com"</span>,
+    <span class="code-key">"timestamp"</span>: <span class="code-string">"2024-02-26T07:45:00Z"</span>
+  }
+}
+                </div>
+                
+                <p><strong>Execution Service stores this in context:</strong></p>
+                <div class="code-block">
+context.setNodeOutput(<span class="code-string">"node-2"</span>, gmailResponse.getOutput());
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-step">
+            <div class="step-number">4</div>
+            <div class="step-title">🤖 Execute Node 3 - Gemini Service</div>
+            <div class="step-content">
+                <p><strong>Execution Service resolves variable references and calls Gemini Service</strong></p>
+                
+                <div class="code-block">
+<span class="code-comment">// 1. Resolve template variables from context</span>
+String prompt = resolveTemplate(
+    <span class="code-string">"Summarize this email: {{node-2.output.body}}"</span>,
+    context
+);
+<span class="code-comment">// Result: "Summarize this email: Hi, here's the latest update..."</span>
+
+<span class="code-comment">// 2. Call Gemini Service</span>
+POST http://gemini-service:8092/execute
+
+{
+  <span class="code-key">"nodeId"</span>: <span class="code-string">"node-3"</span>,
+  <span class="code-key">"config"</span>: {
+    <span class="code-key">"prompt"</span>: <span class="code-string">"Summarize this email: Hi, here's the latest..."</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"gemini-pro"</span>
+  }
+}
+                </div>
+                
+                <p><strong>Gemini Service Response:</strong></p>
+                <div class="code-block">
+{
+  <span class="code-key">"success"</span>: <span class="code-number">true</span>,
+  <span class="code-key">"output"</span>: {
+    <span class="code-key">"text"</span>: <span class="code-string">"The client provided a project update discussing timeline changes and resource allocation for Q2."</span>,
+    <span class="code-key">"tokensUsed"</span>: <span class="code-number">150</span>
+  }
+}
+                </div>
+                
+                <p><strong>Store in context:</strong></p>
+                <div class="code-block">
+context.setNodeOutput(<span class="code-string">"node-3"</span>, geminiResponse.getOutput());
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-step">
+            <div class="step-number">5</div>
+            <div class="step-title">🌐 Execute Node 4 - HTTP Service</div>
+            <div class="step-content">
+                <p><strong>Execution Service resolves variables and calls HTTP Service</strong></p>
+                
+                <div class="code-block">
+<span class="code-comment">// Resolve all template variables</span>
+POST http://http-service:8093/execute
+
+{
+  <span class="code-key">"nodeId"</span>: <span class="code-string">"node-4"</span>,
+  <span class="code-key">"config"</span>: {
+    <span class="code-key">"method"</span>: <span class="code-string">"POST"</span>,
+    <span class="code-key">"url"</span>: <span class="code-string">"https://webhook.site/xyz"</span>,
+    <span class="code-key">"body"</span>: {
+      <span class="code-key">"summary"</span>: <span class="code-string">"The client provided a project update..."</span>,
+      <span class="code-key">"originalEmail"</span>: <span class="code-string">"Project Update from Client"</span>
+    }
+  }
+}
+                </div>
+                
+                <p><strong>HTTP Service makes external request and responds:</strong></p>
+                <div class="code-block">
+{
+  <span class="code-key">"success"</span>: <span class="code-number">true</span>,
+  <span class="code-key">"output"</span>: {
+    <span class="code-key">"statusCode"</span>: <span class="code-number">200</span>,
+    <span class="code-key">"responseBody"</span>: <span class="code-string">"Webhook received successfully"</span>
+  }
+}
+                </div>
+            </div>
+        </div>
+
+        <div class="execution-step">
+            <div class="step-number">6</div>
+            <div class="step-title">✅ Complete Workflow Execution</div>
+            <div class="step-content">
+                <p><strong>Execution Service finalizes the workflow</strong></p>
+                <ul>
+                    <li>Marks execution as <code>SUCCESS</code></li>
+                    <li>Stores execution history in PostgreSQL</li>
+                    <li>Sends logs to Logging Service</li>
+                    <li>Publishes completion event to Kafka (optional for notifications)</li>
+                </ul>
+                <div class="code-block">
+<span class="code-comment">// Store in execution_history table</span>
+{
+  <span class="code-key">"executionId"</span>: <span class="code-string">"exec-789"</span>,
+  <span class="code-key">"workflowId"</span>: <span class="code-string">"workflow-123"</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"SUCCESS"</span>,
+  <span class="code-key">"startTime"</span>: <span class="code-string">"2024-02-26T08:00:01Z"</span>,
+  <span class="code-key">"endTime"</span>: <span class="code-string">"2024-02-26T08:00:15Z"</span>,
+  <span class="code-key">"nodeResults"</span>: {
+    <span class="code-key">"node-2"</span>: { <span class="code-key">"status"</span>: <span class="code-string">"SUCCESS"</span>, <span class="code-key">"duration"</span>: <span class="code-string">"2s"</span> },
+    <span class="code-key">"node-3"</span>: { <span class="code-key">"status"</span>: <span class="code-string">"SUCCESS"</span>, <span class="code-key">"duration"</span>: <span class="code-string">"5s"</span> },
+    <span class="code-key">"node-4"</span>: { <span class="code-key">"status"</span>: <span class="code-string">"SUCCESS"</span>, <span class="code-key">"duration"</span>: <span class="code-string">"1s"</span> }
+  }
+}
+                </div>
+            </div>
+        </div>
+
+        <!-- Communication Diagram -->
+        <h2>4️⃣ Inter-Service Communication Methods</h2>
+        <div class="section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Communication Type</th>
+                        <th>When Used</th>
+                        <th>Protocol</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Synchronous REST</strong></td>
+                        <td>Node execution (Execution Service → Integration Services)</td>
+                        <td>HTTP REST</td>
+                        <td>POST /execute to Gmail Service</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Asynchronous Events</strong></td>
+                        <td>Trigger workflows, notifications</td>
+                        <td>Kafka Topics</td>
+                        <td>Trigger Service → workflow-trigger topic</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Service Discovery</strong></td>
+                        <td>Find service locations dynamically</td>
+                        <td>Eureka / Consul</td>
+                        <td>Execution Service discovers Gmail Service URL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Database</strong></td>
+                        <td>Read workflow definitions, store results</td>
+                        <td>PostgreSQL</td>
+                        <td>Workflow Service stores workflow JSON</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Credentials Retrieval</strong></td>
+                        <td>Get OAuth tokens, API keys</td>
+                        <td>HTTP REST</td>
+                        <td>Gmail Service fetches user's OAuth token</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Key Points -->
+        <h2>5️⃣ Key Takeaways</h2>
+        
+        <div class="success-box">
+            <h3>✅ Execution Order is Guaranteed</h3>
+            <ul>
+                <li><strong>Edges define order:</strong> The <code>edges</code> array creates a dependency graph</li>
+                <li><strong>Topological sort:</strong> Execution Service uses graph algorithm to determine sequence</li>
+                <li><strong>Sequential execution:</strong> Node N+1 only starts after Node N completes successfully</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h3>✅ Data Flows Through Execution Context</h3>
+            <ul>
+                <li><strong>Execution Context:</strong> In-memory object that stores all node outputs</li>
+                <li><strong>Variable Resolution:</strong> Template engine replaces <code>{{node-X.output.field}}</code> with actual values</li>
+                <li><strong>Available downstream:</strong> Any node can reference outputs from previous nodes</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h3>✅ Services Are Loosely Coupled</h3>
+            <ul>
+                <li><strong>Integration services don't know about each other</strong></li>
+                <li>They only implement <code>NodeExecutor</code> interface</li>
+                <li>Execution Service orchestrates everything</li>
+                <li>Easy to add new services without modifying existing ones</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Error Handling</h3>
+            <ul>
+                <li><strong>Node failure:</strong> If Gmail Service fails, execution stops</li>
+                <li><strong>Retry logic:</strong> Execution Service can retry failed nodes (configurable)</li>
+                <li><strong>Error propagation:</strong> User sees which node failed in Angular UI</li>
+                <li><strong>Partial execution:</strong> All successful node outputs are saved</li>
+            </ul>
+        </div>
+
+        <!-- Java Interface Example -->
+        <h2>6️⃣ The NodeExecutor Interface (Contract for All Services)</h2>
+        <div class="section">
+            <p><strong>Every integration service implements this interface:</strong></p>
+            <div class="code-block">
+<span class="code-comment">// NodeExecutor.java (Common Interface)</span>
+<span class="code-key">public interface</span> NodeExecutor {
+    
+    <span class="code-comment">// Main execution method - called by Execution Service</span>
+    ExecutionResult execute(NodeConfig config, Map&lt;String, Object&gt; inputs);
+    
+    <span class="code-comment">// Returns metadata about this node (for Angular UI)</span>
+    NodeSchema getSchema();
+    
+    <span class="code-comment">// Unique identifier: "gmail", "gemini", "http", etc.</span>
+    String getNodeType();
+}
+
+<span class="code-comment">// Example: GmailServiceImpl.java</span>
+@Service
+<span class="code-key">public class</span> GmailServiceImpl <span class="code-key">implements</span> NodeExecutor {
+    
+    @Override
+    <span class="code-key">public</span> ExecutionResult execute(NodeConfig config, Map&lt;String, Object&gt; inputs) {
+        <span class="code-comment">// 1. Parse config</span>
+        String action = config.get(<span class="code-string">"action"</span>);
+        
+        <span class="code-comment">// 2. Get credentials</span>
+        String oauthToken = credentialsService.getToken(config.getUserId(), <span class="code-string">"gmail"</span>);
+        
+        <span class="code-comment">// 3. Execute action</span>
+        <span class="code-key">if</span> (action.equals(<span class="code-string">"read"</span>)) {
+            List&lt;Email&gt; emails = gmailApi.readEmails(config.getFilters(), oauthToken);
+            <span class="code-key">return</span> ExecutionResult.success(Map.of(<span class="code-string">"emails"</span>, emails));
+        }
+    }
+    
+    @Override
+    <span class="code-key">public</span> String getNodeType() {
+        <span class="code-key">return</span> <span class="code-string">"gmail"</span>;
+    }
+}
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h3>🎯 Summary</h3>
+            <ol>
+                <li><strong>User creates workflow visually</strong> in Angular (drag & drop nodes, connect them)</li>
+                <li><strong>Saved as JSON graph</strong> in PostgreSQL (nodes + edges)</li>
+                <li><strong>Trigger fires</strong> → Publishes event to Kafka</li>
+                <li><strong>Execution Service consumes event</strong> → Builds execution order from edges</li>
+                <li><strong>Calls each node service sequentially</strong> via REST API</li>
+                <li><strong>Passes data between nodes</strong> using Execution Context and variable templates</li>
+                <li><strong>Stores results</strong> in PostgreSQL for history</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

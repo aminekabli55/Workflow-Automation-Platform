@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Spring Boot Actuator endpoints
+  - job_name: 'execution-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['execution-service:8082']
+        labels:
+          service: 'execution-service'
+
+  - job_name: 'workflow-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['workflow-service:8081']
+        labels:
+          service: 'workflow-service'
+
+  - job_name: 'trigger-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['trigger-service:8083']
+        labels:
+          service: 'trigger-service'
+
+  - job_name: 'gmail-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['gmail-service:8091']
+        labels:
+          service: 'gmail-service'
+
+  - job_name: 'gemini-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['gemini-service:8092']
+        labels:
+          service: 'gemini-service'
+
+  - job_name: 'http-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['http-service:8093']
+        labels:
+          service: 'http-service'
